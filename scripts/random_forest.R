@@ -6,6 +6,7 @@ library(tidyverse)
 library(tidymodels)
 library(doParallel)
 
+setwd('..')
 source('./scripts/utils.R')
 source('./scripts/wrangling.R')
 PARALLEL <- T
@@ -27,7 +28,7 @@ set.seed(2003)
 ## parallel tune grid
 
 if(PARALLEL){
-  cl <- makePSOCKcluster(5)
+  cl <- makePSOCKcluster(25)
   registerDoParallel(cl)
 }
 
