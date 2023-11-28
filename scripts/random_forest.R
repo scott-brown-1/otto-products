@@ -28,12 +28,12 @@ set.seed(2003)
 ## parallel tune grid
 
 if(PARALLEL){
-  cl <- makePSOCKcluster(25)
+  cl <- makePSOCKcluster(6)
   registerDoParallel(cl)
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.85)
+prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.7)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -47,7 +47,7 @@ bake(prepped_recipe, new_data=test)
 rf_model <- rand_forest(
   mtry = 12, #tune(),
   min_n = 40, #tune(),
-  trees = 1000
+  trees = 500
 ) %>%
   set_engine("ranger") %>%
   set_mode("classification")

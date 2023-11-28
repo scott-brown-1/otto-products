@@ -9,6 +9,7 @@ source('./scripts/utils.R')
 
 ## Load data
 train <- vroom::vroom('./data/train.csv')
+test <- vrom::vroom('./data/test.csv')
 
 ###########################
 ####### Examine Data ######
@@ -30,13 +31,14 @@ plot_missing(train)
 
 # Count total missing values
 sum(sum(is.na(train)))
+sum(sum(is.na(test)))
 
 ###########################
 ## Visually examine data ##
 ###########################
 
-ggplot(amazon, aes(x=ROLE_FAMILY), stat=count) +
-  geom_bar()
+# ggplot(amazon, aes(x=ROLE_FAMILY), stat=count) +
+#   geom_bar()
 
 ## Check for 0/1 feature columns
 for(col in colnames(train)){
@@ -44,6 +46,14 @@ for(col in colnames(train)){
     print('A')
   }
 } 
+
+var_lengths <- c()
+for(i in 1:dim(train)[2]){
+  if(i==1 | i==95) next # Skip id and target cols
+  var_lengths[i] <- nrow(unique(train[,i]))
+} 
+
+hist(var_lengths, breaks=100)
 
 ## NOTE: plot histogram of variable lengths
 
