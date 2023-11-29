@@ -9,7 +9,7 @@ source('./scripts/utils.R')
 
 ## Load data
 train <- vroom::vroom('./data/train.csv')
-test <- vrom::vroom('./data/test.csv')
+test <- vroom::vroom('./data/test.csv')
 
 ###########################
 ####### Examine Data ######

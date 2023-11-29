@@ -33,7 +33,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.7)
+prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.8)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -45,9 +45,9 @@ bake(prepped_recipe, new_data=test)
 
 ## Define model
 rf_model <- rand_forest(
-  mtry = 12, #tune(),
-  min_n = 40, #tune(),
-  trees = 500
+  mtry = tune(), #tune(),
+  min_n = tune(), #tune(),
+  trees = 400
 ) %>%
   set_engine("ranger") %>%
   set_mode("classification")
@@ -57,37 +57,30 @@ rf_wf <- workflow(prepped_recipe) %>%
   add_model(rf_model)
 
 ## Grid of values to tune over
-# tuning_grid <- grid_regular(
-#   mtry(range=c(1,5)),#(range=c(4,ncol(train))),
-#   min_n(),
-#   levels = 5)
-# 
-# ## Split data for CV
-# folds <- vfold_cv(train, v = 5, repeats=1)
+tuning_grid <- grid_regular(
+  mtry(range=c(10,25)),#(range=c(4,ncol(train))),
+  min_n(),
+  levels = 4)
+
+## Split data for CV
+folds <- vfold_cv(train, v = 4, repeats=1)
 
 ## Run the CV
-#cv_results <- rand_forest_wf %>%
-#  tune_grid(resamples=folds,
-#            grid=tuning_grid,
-#            metrics=metric_set(roc_auc))
+cv_results <- rf_wf %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(mn_log_loss))
 
 ## Find optimal tuning params
-#best_params <- cv_results %>%
-#  select_best("roc_auc")
+best_params <- cv_results %>%
+  select_best('mn_log_loss')
 
-#tryCatch(
-#  expr = {
-#    print(best_params)
-#  },
-#  error = function(e){ 
-#    print('Error caught')
-#    print(e)
-#  })
+print(best_params)
 
 ## Fit workflow
-#final_wf <- rand_forest_wf %>%
-#  finalize_workflow(best_params) %>%
-#  fit(data = train)
+final_wf <- rf_wf %>%
+  finalize_workflow(best_params) %>%
+  fit(data = train)
 
 final_wf <- rf_wf %>%
   fit(data = train)
