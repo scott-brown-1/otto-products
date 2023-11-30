@@ -9,7 +9,7 @@ library(doParallel)
 setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
-PARALLEL <- T
+PARALLEL <- F
 FACTOR_CUTOFF <- 25
 
 #########################
@@ -47,7 +47,7 @@ bake(prepped_recipe, new_data=test)
 
 ## Define model
 mlp_model <- mlp(
-  hidden_units = 22,#tune(),
+  hidden_units = tune(),
   epochs = 75, #or 100 or 2507
   activation="relu"
 ) %>%
@@ -60,26 +60,26 @@ mlp_wf <- workflow() %>%
   add_recipe(prepped_recipe) %>%
   add_model(mlp_model)
 
-# ## Grid of values to tune over
-# tuning_grid <- grid_regular(
-#   hidden_units(range=c(1, 30)),
-#   levels = 5)
-# 
-# ## Split data for CV
-# folds <- vfold_cv(train, v = 5, repeats=1)
-# 
-# ## Run the CV
-# cv_results <- mlp_wf %>%
-#   tune_grid(resamples=folds,
-#             grid=tuning_grid,
-#             metrics=metric_set(accuracy))
-# 
-# ## Find optimal tuning params
-# best_params <- cv_results %>%
-#   select_best("accuracy")
-# 
-# print(best_params)
-# 
+## Grid of values to tune over
+tuning_grid <- grid_regular(
+  hidden_units(range=c(1, 30)),
+  levels = 5)
+ 
+## Split data for CV
+folds <- vfold_cv(train, v = 5, repeats=1)
+
+## Run the CV
+cv_results <- mlp_wf %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(mn_log_loss))
+ 
+## Find optimal tuning params
+best_params <- cv_results %>%
+  select_best("mn_log_loss")
+
+print(best_params)
+ 
 # hidden_unit_plot <- cv_results %>% 
 #   collect_metrics() %>%
 #   filter(.metric=="accuracy") %>%
@@ -90,7 +90,7 @@ mlp_wf <- workflow() %>%
 
 ## Fit workflow
 final_wf <- mlp_wf %>%
-  #finalize_workflow(best_params) %>%
+  finalize_workflow(best_params) %>%
   fit(data = train)
 
 ## Predict new y
