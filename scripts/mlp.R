@@ -5,12 +5,11 @@
 library(tidyverse)
 library(tidymodels)
 library(doParallel)
-library(bonsai)
 
 setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
-PARALLEL <- F
+PARALLEL <- T
 FACTOR_CUTOFF <- 25
 
 #########################
