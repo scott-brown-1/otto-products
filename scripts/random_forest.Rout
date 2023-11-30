@@ -47,7 +47,7 @@ Type 'q()' to quit R.
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Use tidymodels_prefer() to resolve common conflicts.
+• Learn how to get started at https://www.tidymodels.org/start/
 > library(doParallel)
 Loading required package: foreach
 
@@ -97,16 +97,16 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 > ## parallel tune grid
 > 
 > if(PARALLEL){
-+   cl <- makePSOCKcluster(25)
++   cl <- makePSOCKcluster(6)
 +   registerDoParallel(cl)
 + }
 > 
 > ## Set up preprocessing
-> prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.85)
+> prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.8)
 > 
 > ## Bake recipe
 > bake(prepped_recipe, new_data=train)
-# A tibble: 61,878 × 52
+# A tibble: 61,878 × 44
    target    PC01    PC02   PC03    PC04    PC05    PC06    PC07   PC08    PC09
    <fct>    <dbl>   <dbl>  <dbl>   <dbl>   <dbl>   <dbl>   <dbl>  <dbl>   <dbl>
  1 Class_1 -0.385  -0.262 -0.341  0.810  -0.0406  0.595   0.140  0.218  -0.663 
@@ -120,14 +120,14 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
  9 Class_1  0.543   0.281 -1.42   2.01   -0.352   0.797   0.0844 0.0296 -0.406 
 10 Class_1 -0.615  -0.419 -1.15   0.0439 -0.562  -0.482  -0.136  0.377  -0.0276
 # ℹ 61,868 more rows
-# ℹ 42 more variables: PC10 <dbl>, PC11 <dbl>, PC12 <dbl>, PC13 <dbl>,
+# ℹ 34 more variables: PC10 <dbl>, PC11 <dbl>, PC12 <dbl>, PC13 <dbl>,
 #   PC14 <dbl>, PC15 <dbl>, PC16 <dbl>, PC17 <dbl>, PC18 <dbl>, PC19 <dbl>,
 #   PC20 <dbl>, PC21 <dbl>, PC22 <dbl>, PC23 <dbl>, PC24 <dbl>, PC25 <dbl>,
 #   PC26 <dbl>, PC27 <dbl>, PC28 <dbl>, PC29 <dbl>, PC30 <dbl>, PC31 <dbl>,
 #   PC32 <dbl>, PC33 <dbl>, PC34 <dbl>, PC35 <dbl>, PC36 <dbl>, PC37 <dbl>,
-#   PC38 <dbl>, PC39 <dbl>, PC40 <dbl>, PC41 <dbl>, PC42 <dbl>, PC43 <dbl>, …
+#   PC38 <dbl>, PC39 <dbl>, PC40 <dbl>, PC41 <dbl>, PC42 <dbl>, PC43 <dbl>
 > bake(prepped_recipe, new_data=test)
-# A tibble: 144,368 × 51
+# A tibble: 144,368 × 43
      PC01   PC02   PC03    PC04    PC05   PC06   PC07     PC08    PC09   PC10
     <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>  <dbl>    <dbl>   <dbl>  <dbl>
  1 -1.25  -0.547 -0.434  0.112   2.62   -3.83   1.78   0.0817  -0.690   0.562
@@ -141,12 +141,12 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
  9 -1.63  -1.67  -0.539 -0.113   0.668  -1.07   0.375 -0.00441 -0.0704 -0.220
 10 -1.72  -1.16  -1.07   0.115  -0.682  -0.189  0.423  0.433   -0.313  -1.46 
 # ℹ 144,358 more rows
-# ℹ 41 more variables: PC11 <dbl>, PC12 <dbl>, PC13 <dbl>, PC14 <dbl>,
+# ℹ 33 more variables: PC11 <dbl>, PC12 <dbl>, PC13 <dbl>, PC14 <dbl>,
 #   PC15 <dbl>, PC16 <dbl>, PC17 <dbl>, PC18 <dbl>, PC19 <dbl>, PC20 <dbl>,
 #   PC21 <dbl>, PC22 <dbl>, PC23 <dbl>, PC24 <dbl>, PC25 <dbl>, PC26 <dbl>,
 #   PC27 <dbl>, PC28 <dbl>, PC29 <dbl>, PC30 <dbl>, PC31 <dbl>, PC32 <dbl>,
 #   PC33 <dbl>, PC34 <dbl>, PC35 <dbl>, PC36 <dbl>, PC37 <dbl>, PC38 <dbl>,
-#   PC39 <dbl>, PC40 <dbl>, PC41 <dbl>, PC42 <dbl>, PC43 <dbl>, PC44 <dbl>, …
+#   PC39 <dbl>, PC40 <dbl>, PC41 <dbl>, PC42 <dbl>, PC43 <dbl>
 > 
 > #########################
 > ## Fit Classifier Model #
@@ -154,9 +154,9 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 > 
 > ## Define model
 > rf_model <- rand_forest(
-+   mtry = 12, #tune(),
-+   min_n = 40, #tune(),
-+   trees = 1000
++   mtry = tune(), #tune(),
++   min_n = tune(), #tune(),
++   trees = 400
 + ) %>%
 +   set_engine("ranger") %>%
 +   set_mode("classification")
@@ -166,40 +166,40 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 +   add_model(rf_model)
 > 
 > ## Grid of values to tune over
-> # tuning_grid <- grid_regular(
-> #   mtry(range=c(1,5)),#(range=c(4,ncol(train))),
-> #   min_n(),
-> #   levels = 5)
-> # 
-> # ## Split data for CV
-> # folds <- vfold_cv(train, v = 5, repeats=1)
+> tuning_grid <- grid_regular(
++   mtry(range=c(10,25)),#(range=c(4,ncol(train))),
++   min_n(),
++   levels = 4)
+> 
+> ## Split data for CV
+> folds <- vfold_cv(train, v = 4, repeats=1)
 > 
 > ## Run the CV
-> #cv_results <- rand_forest_wf %>%
-> #  tune_grid(resamples=folds,
-> #            grid=tuning_grid,
-> #            metrics=metric_set(roc_auc))
+> cv_results <- rf_wf %>%
++   tune_grid(resamples=folds,
++             grid=tuning_grid,
++             metrics=metric_set(mn_log_loss))
 > 
 > ## Find optimal tuning params
-> #best_params <- cv_results %>%
-> #  select_best("roc_auc")
+> best_params <- cv_results %>%
++   select_best('mn_log_loss')
 > 
-> #tryCatch(
-> #  expr = {
-> #    print(best_params)
-> #  },
-> #  error = function(e){ 
-> #    print('Error caught')
-> #    print(e)
-> #  })
+> print(best_params)
+# A tibble: 1 × 3
+   mtry min_n .config              
+  <int> <int> <chr>                
+1    15     2 Preprocessor1_Model02
 > 
 > ## Fit workflow
-> #final_wf <- rand_forest_wf %>%
-> #  finalize_workflow(best_params) %>%
-> #  fit(data = train)
+> final_wf <- rf_wf %>%
++   finalize_workflow(best_params) %>%
++   fit(data = train)
 > 
 > final_wf <- rf_wf %>%
 +   fit(data = train)
+Warning messages:
+1: tune columns were requested but there were 43 predictors in the data. 43 will be used. 
+2: tune samples were requested but there were 145098 rows in the data. 145098 will be used. 
 > 
 > ## Predict new y
 > output <- predict(final_wf, new_data=test, type='prob') %>%
@@ -226,5 +226,5 @@ New names:
 + }
 > 
 > proc.time()
-    user   system  elapsed 
-3904.695   13.583 3778.707 
+     user    system   elapsed 
+ 2008.683    10.864 26637.140 
