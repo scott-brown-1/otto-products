@@ -55,6 +55,14 @@ for(i in 1:dim(train)[2]){
 
 hist(var_lengths, breaks=100)
 
+corrs <- c()
+for(i in 1:dim(train)[2]){
+  if(i==1 | i==95) next # Skip id and target cols
+  corrs[i] <- cor(train[,i],train$target)
+} 
+
+hist(corrs, breaks=100)
+
 ## NOTE: plot histogram of variable lengths
 
 ## NOTE: zero variance cols exist

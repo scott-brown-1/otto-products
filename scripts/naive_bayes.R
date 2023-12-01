@@ -99,7 +99,6 @@ output <- predict(final_wf, new_data=test, type='prob') %>%
     Class_8=.pred_Class_8,
     Class_9=.pred_Class_9)
 
-#LS: penalty, then mixture
 vroom::vroom_write(output,'./outputs/naive_bayes_preds.csv',delim=',')
 
 if(PARALLEL){
