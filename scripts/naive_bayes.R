@@ -7,7 +7,7 @@ library(tidymodels)
 library(doParallel)
 library(discrim)
 
-#setwd('..')
+setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- T
@@ -31,7 +31,7 @@ set.seed(2003)
 ## parallel tune grid
 
 if(PARALLEL){
-  cl <- makePSOCKcluster(6)
+  cl <- makePSOCKcluster(8)
   registerDoParallel(cl)
 }
 

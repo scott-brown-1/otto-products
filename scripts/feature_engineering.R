@@ -16,8 +16,8 @@ setup_train_recipe <- function(df,encode=T,poly=F,smote_K=5, pca_threshold=0.85)
       step_lencode_glm(all_nominal_predictors(), outcome = vars(target))
   }
   
-  #prelim_ft_eng <- prelim_ft_eng %>%
-  #  step_normalize(all_numeric_predictors()) # Normalize features
+  prelim_ft_eng <- prelim_ft_eng %>%
+    step_normalize(all_numeric_predictors()) # Normalize features
   
   ## SMOTE upsample if K nearest neighbors > 0
   # if(smote_K > 0){
