@@ -7,7 +7,7 @@ library(tidymodels)
 library(doParallel)
 library(bonsai)
 
-setwd('..')
+#setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- T
@@ -31,7 +31,7 @@ set.seed(2003)
 ## parallel tune grid
 
 if(PARALLEL){
-  cl <- makePSOCKcluster(10)
+  cl <- makePSOCKcluster(5)
   registerDoParallel(cl)
 }
 
@@ -47,12 +47,12 @@ bake(prepped_recipe, new_data=test)
 #########################
 
 boost_model <- boost_tree(
-  trees = tune(),
-  tree_depth = tune(),
-  learn_rate = 0.1,#tune(),
-  mtry = tune(),
-  min_n = 2, #tune(),
-  loss_reduction = 0 #tune(),
+  trees = 175,
+  tree_depth = 6,
+  learn_rate = 0.1,
+  mtry = 20,
+  min_n = 5, 
+  loss_reduction = 0
   ) %>%
   set_engine("lightgbm") %>%
   set_mode("classification")
@@ -89,7 +89,7 @@ print(best_params)
 
 # Fit workflow
 final_wf <- boost_wf %>%
-  finalize_workflow(best_params) %>%
+  #finalize_workflow(best_params) %>%
   fit(data = train)
 
 ## Predict new y

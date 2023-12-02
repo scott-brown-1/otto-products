@@ -4,6 +4,7 @@ library(themis) # for smote
 setup_train_recipe <- function(df,encode=T,poly=F,smote_K=5, pca_threshold=0.85){
   
   prelim_ft_eng <- recipe(target~., data=df) %>%
+    step_rm(id) %>%
     step_zv(all_predictors()) # Remove zero-variance cols 
 
   if(poly){
