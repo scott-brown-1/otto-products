@@ -1,4 +1,4 @@
-#########################
+2214049#########################
 ### Imports and setup ###
 #########################
 
@@ -7,10 +7,10 @@ library(tidymodels)
 library(doParallel)
 library(bonsai)
 
-#setwd('..')
+setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
-PARALLEL <- F
+PARALLEL <- T
 FACTOR_CUTOFF <- 25
 
 #########################
@@ -18,7 +18,7 @@ FACTOR_CUTOFF <- 25
 #########################
 
 ## Load data
-data <- load_data(factor_cutoff=0)#FACTOR_CUTOFF)
+data <- load_data(factor_cutoff=FACTOR_CUTOFF)
 train <- data$train
 test <- data$test
 
@@ -31,7 +31,7 @@ set.seed(2003)
 ## parallel tune grid
 
 if(PARALLEL){
-  cl <- makePSOCKcluster(6)
+  cl <- makePSOCKcluster(10)
   registerDoParallel(cl)
 }
 
@@ -47,10 +47,10 @@ bake(prepped_recipe, new_data=test)
 #########################
 
 boost_model <- boost_tree(
-  trees = 75, #tune(),
-  tree_depth = 2, #tune(),
+  trees = tune(),
+  tree_depth = tune(),
   learn_rate = 0.1,#tune(),
-  mtry = 4,#tune(),
+  mtry = tune(),
   min_n = 2, #tune(),
   loss_reduction = 0 #tune(),
   ) %>%
@@ -63,33 +63,33 @@ boost_wf <- workflow(prepped_recipe) %>%
   add_model(boost_model)
 
 # ## Grid of values to tune over
-# tuning_grid <- grid_regular(
-#   trees(),
-#   tree_depth(),
+tuning_grid <- grid_regular(
+  trees(),
+  tree_depth(),
 #   learn_rate(),
-#   mtry(range=c(3,ncol(train))),
+  mtry(range=c(3,20)),
 #   min_n(),
 #   loss_reduction(),
-#   levels = 5)
-# 
-# ## Split data for CV
-# folds <- vfold_cv(train, v = 5, repeats=1)
+  levels = 4)
+
+## Split data for CV
+folds <- vfold_cv(train, v = 4, repeats=1)
 
 # Run the CV
-# cv_results <- boost_wf %>%
-#   tune_grid(resamples=folds,
-#             grid=tuning_grid,
-#             metrics=metric_set(roc_auc))
+cv_results <- boost_wf %>%
+  tune_grid(resamples=folds,
+            grid=tuning_grid,
+            metrics=metric_set(mn_log_loss))
 
 # Find optimal tuning params
-# best_params <- cv_results %>%
-#   select_best("roc_auc")
+best_params <- cv_results %>%
+  select_best("mn_log_loss")
 
-# print(best_params)
+print(best_params)
 
 # Fit workflow
 final_wf <- boost_wf %>%
-  #finalize_workflow(best_params) %>%
+  finalize_workflow(best_params) %>%
   fit(data = train)
 
 ## Predict new y
