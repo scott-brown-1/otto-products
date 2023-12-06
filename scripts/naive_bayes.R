@@ -10,7 +10,7 @@ library(discrim)
 setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
-PARALLEL <- T
+PARALLEL <- F
 FACTOR_CUTOFF <- 25
 
 #########################

@@ -6,6 +6,7 @@ library(tidyverse)
 library(tidymodels)
 library(doParallel)
 library(bonsai)
+library(fastshap)
 
 #setwd('..')
 source('./scripts/utils.R')
@@ -18,7 +19,7 @@ FACTOR_CUTOFF <- 25
 #########################
 
 ## Load data
-data <- load_data(factor_cutoff=FACTOR_CUTOFF)
+data <- load_data(factor_cutoff=FACTOR_CUTOFF, drop_n_worst=0)
 train <- data$train
 test <- data$test
 
@@ -58,7 +59,6 @@ boost_model <- boost_tree(
   set_mode("classification")
 
 ## Define workflow
-# Transform response to get different cutoff
 boost_wf <- workflow(prepped_recipe) %>%
   add_model(boost_model)
 
@@ -91,6 +91,20 @@ boost_wf <- workflow(prepped_recipe) %>%
 final_wf <- boost_wf %>%
   #finalize_workflow(best_params) %>%
   fit(data = train)
+
+
+predict_function_gbm <-  function(model, newdata) {
+  predict(model, newdata) %>% pluck(.,1)
+}
+
+X <- as.data.frame(train %>% select(-target))
+mod <- extract_fit_parsnip(final_wf)
+shap <- fastshap::explain(final_wf, X = X, 
+                          pred_wrapper = predict_function_gbm, 
+                          nsim=10)
+
+saveRDS(shap,'shap.rds')
+print('SAVED RDS')
 
 ## Predict new y
 output <- predict(final_wf, new_data=test, type='prob') %>%

@@ -2,9 +2,31 @@ library(tidyverse)
 
 source('./scripts/constants.R')
 
-load_data <- function(which='train',factor_cutoff=10){
+load_data <- function(factor_cutoff=10, drop_n_worst=10){
   .train <- vroom::vroom(TRAIN_PATH)
   .test <- vroom::vroom(TEST_PATH)
+  
+  ## Drop worst columns as determined by high ANOVA residual SS
+  vals <- tibble()
+  
+  for(col in colnames(.train)){
+    if(col == 'target' | col=='id') next
+    f <- formula(paste0(col,'~target'))
+    tryCatch(
+      {
+        mod <- anova(lm(f, data=.train))
+        #p <- as.data.frame(mod)$`Pr(>F)`[1]
+        ss <- as.data.frame(mod)$`Sum Sq`[2]
+        vals <- rbind(vals,c(col,ss))
+      },
+      error = function(e){print(e);next}
+    )
+  }
+  
+  worst_n <- tail(vals[order(vals[,2]),],drop_n_worst)[,1]
+  print(paste('Drop',worst_n))
+  .train <- .train %>% select(-all_of(worst_n))
+  .test <- .test %>% select(-all_of(worst_n))
   
   ## Fix dtypes
   for(col in colnames(.train)){
