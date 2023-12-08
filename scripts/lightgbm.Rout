@@ -17,8 +17,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> 2214049#########################
-[1] 2214049
+> #########################
 > ### Imports and setup ###
 > #########################
 > 
@@ -48,7 +47,7 @@ Type 'q()' to quit R.
 ✖ dplyr::lag()      masks stats::lag()
 ✖ yardstick::spec() masks readr::spec()
 ✖ recipes::step()   masks stats::step()
-• Search for functions across packages at https://www.tidymodels.org/find/
+• Learn how to get started at https://www.tidymodels.org/start/
 > library(doParallel)
 Loading required package: foreach
 
@@ -61,11 +60,19 @@ The following objects are masked from ‘package:purrr’:
 Loading required package: iterators
 Loading required package: parallel
 > library(bonsai)
+> library(fastshap)
+
+Attaching package: ‘fastshap’
+
+The following object is masked from ‘package:dplyr’:
+
+    explain
+
 > 
 > setwd('..')
 > source('./scripts/utils.R')
 > source('./scripts/feature_engineering.R')
-> PARALLEL <- T
+> PARALLEL <- F
 > FACTOR_CUTOFF <- 25
 > 
 > #########################
@@ -73,7 +80,7 @@ Loading required package: parallel
 > #########################
 > 
 > ## Load data
-> data <- load_data(factor_cutoff=FACTOR_CUTOFF)
+> data <- load_data(factor_cutoff=FACTOR_CUTOFF, drop_n_worst=0)
 Rows: 61878 Columns: 95
 ── Column specification ────────────────────────────────────────────────────────
 Delimiter: ","
@@ -89,6 +96,7 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+[1] "Drop "
 [1] "Changed column feat_5 to factor."
 [1] "Changed column feat_6 to factor."
 [1] "Changed column feat_12 to factor."
@@ -119,28 +127,28 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 > ## parallel tune grid
 > 
 > if(PARALLEL){
-+   cl <- makePSOCKcluster(10)
++   cl <- makePSOCKcluster(5)
 +   registerDoParallel(cl)
 + }
 > 
 > ## Set up preprocessing
-> prepped_recipe <- setup_train_recipe(train, encode=F, poly=F, smote_K=0, pca_threshold=0)
+> prepped_recipe <- setup_train_recipe(train, encode=F, poly=F, smote_K=5, pca_threshold=0)
 > 
 > ## Bake recipe
 > bake(prepped_recipe, new_data=train)
-# A tibble: 61,878 × 95
-      id feat_1 feat_2 feat_3  feat_4 feat_5 feat_6 feat_7 feat_8 feat_9 feat_10
-   <dbl>  <dbl>  <dbl>  <dbl>   <dbl> <fct>  <fct>   <dbl>  <dbl>  <dbl>   <dbl>
- 1 -1.73  0.402 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
- 2 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188  0.150 -0.291  -0.244
- 3 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188  0.150 -0.291  -0.244
- 4 -1.73  0.402 -0.210 -0.307  0.0792 6      1       4.67  -0.294 -0.291   0.679
- 5 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
- 6 -1.73  1.06   0.589 -0.307 -0.279  7      0      -0.188 -0.294 -0.291  -0.244
- 7 -1.73  1.06  -0.210 -0.307 -0.279  0      0      -0.188  0.593 -0.291   0.679
- 8 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
- 9 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188  1.48  -0.291  -0.244
-10 -1.73 -0.254 -0.210 -0.307 -0.279  0      0       0.783 -0.294 -0.291  -0.244
+# A tibble: 61,878 × 94
+   feat_1 feat_2 feat_3  feat_4 feat_5 feat_6 feat_7 feat_8 feat_9 feat_10
+    <dbl>  <dbl>  <dbl>   <dbl> <fct>  <fct>   <dbl>  <dbl>  <dbl>   <dbl>
+ 1  0.402 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
+ 2 -0.254 -0.210 -0.307 -0.279  0      0      -0.188  0.150 -0.291  -0.244
+ 3 -0.254 -0.210 -0.307 -0.279  0      0      -0.188  0.150 -0.291  -0.244
+ 4  0.402 -0.210 -0.307  0.0792 6      1       4.67  -0.294 -0.291   0.679
+ 5 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
+ 6  1.06   0.589 -0.307 -0.279  7      0      -0.188 -0.294 -0.291  -0.244
+ 7  1.06  -0.210 -0.307 -0.279  0      0      -0.188  0.593 -0.291   0.679
+ 8 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
+ 9 -0.254 -0.210 -0.307 -0.279  0      0      -0.188  1.48  -0.291  -0.244
+10 -0.254 -0.210 -0.307 -0.279  0      0       0.783 -0.294 -0.291  -0.244
 # ℹ 61,868 more rows
 # ℹ 84 more variables: feat_11 <dbl>, feat_12 <fct>, feat_13 <dbl>,
 #   feat_14 <dbl>, feat_15 <dbl>, feat_16 <dbl>, feat_17 <dbl>, feat_18 <dbl>,
@@ -149,19 +157,19 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 #   feat_29 <dbl>, feat_30 <dbl>, feat_31 <dbl>, feat_32 <dbl>, feat_33 <fct>,
 #   feat_34 <dbl>, feat_35 <dbl>, feat_36 <dbl>, feat_37 <fct>, …
 > bake(prepped_recipe, new_data=test)
-# A tibble: 144,368 × 94
-      id feat_1 feat_2 feat_3  feat_4 feat_5 feat_6 feat_7 feat_8 feat_9 feat_10
-   <dbl>  <dbl>  <dbl>  <dbl>   <dbl> <fct>  <fct>   <dbl>  <dbl>  <dbl>   <dbl>
- 1 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291   2.53 
- 2 -1.73  1.06   1.39   4.46   5.46   0      0      -0.188 -0.294 -0.291  -0.244
- 3 -1.73 -0.254  0.589  3.78   0.0792 0      0      -0.188 -0.294 -0.291  -0.244
- 4 -1.73 -0.254 -0.210 -0.307  0.0792 0      0      -0.188 -0.294 -0.291  -0.244
- 5 -1.73  0.402 -0.210 -0.307  0.0792 0      0       0.783  0.593 -0.291   2.53 
- 6 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294  4.60   -0.244
- 7 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291   4.37 
- 8 -1.73  1.06  -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
- 9 -1.73 -0.254 -0.210 -0.307 -0.279  1      0      -0.188 -0.294 -0.291  -0.244
-10 -1.73 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294  2.59   -0.244
+# A tibble: 144,368 × 93
+   feat_1 feat_2 feat_3  feat_4 feat_5 feat_6 feat_7 feat_8 feat_9 feat_10
+    <dbl>  <dbl>  <dbl>   <dbl> <fct>  <fct>   <dbl>  <dbl>  <dbl>   <dbl>
+ 1 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291   2.53 
+ 2  1.06   1.39   4.46   5.46   0      0      -0.188 -0.294 -0.291  -0.244
+ 3 -0.254  0.589  3.78   0.0792 0      0      -0.188 -0.294 -0.291  -0.244
+ 4 -0.254 -0.210 -0.307  0.0792 0      0      -0.188 -0.294 -0.291  -0.244
+ 5  0.402 -0.210 -0.307  0.0792 0      0       0.783  0.593 -0.291   2.53 
+ 6 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294  4.60   -0.244
+ 7 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291   4.37 
+ 8  1.06  -0.210 -0.307 -0.279  0      0      -0.188 -0.294 -0.291  -0.244
+ 9 -0.254 -0.210 -0.307 -0.279  1      0      -0.188 -0.294 -0.291  -0.244
+10 -0.254 -0.210 -0.307 -0.279  0      0      -0.188 -0.294  2.59   -0.244
 # ℹ 144,358 more rows
 # ℹ 83 more variables: feat_11 <dbl>, feat_12 <fct>, feat_13 <dbl>,
 #   feat_14 <dbl>, feat_15 <dbl>, feat_16 <dbl>, feat_17 <dbl>, feat_18 <dbl>,
@@ -175,39 +183,90 @@ dbl (94): id, feat_1, feat_2, feat_3, feat_4, feat_5, feat_6, feat_7, feat_8...
 > #########################
 > 
 > boost_model <- boost_tree(
-+   trees = tune(),
-+   tree_depth = tune(),
-+   learn_rate = 0.1,#tune(),
-+   mtry = tune(),
-+   min_n = 2, #tune(),
-+   loss_reduction = 0 #tune(),
++   trees = 500,
++   tree_depth = 6,
++   learn_rate = 0.05,
++   mtry = 20,
++   min_n = 5, 
++   loss_reduction = 0
 +   ) %>%
 +   set_engine("lightgbm") %>%
 +   set_mode("classification")
 > 
 > ## Define workflow
-> # Transform response to get different cutoff
 > boost_wf <- workflow(prepped_recipe) %>%
 +   add_model(boost_model)
 > 
-> # ## Grid of values to tune over
-> tuning_grid <- grid_regular(
-+   trees(),
-+   tree_depth(),
-+ #   learn_rate(),
-+   mtry(range=c(3,20)),
-+ #   min_n(),
-+ #   loss_reduction(),
-+   levels = 4)
+> # # ## Grid of values to tune over
+> # tuning_grid <- grid_regular(
+> #   trees(),
+> #   tree_depth(),
+> # #   learn_rate(),
+> #   mtry(range=c(3,20)),
+> # #   min_n(),
+> # #   loss_reduction(),
+> #   levels = 4)
+> # 
+> # ## Split data for CV
+> # folds <- vfold_cv(train, v = 4, repeats=1)
+> # 
+> # # Run the CV
+> # cv_results <- boost_wf %>%
+> #   tune_grid(resamples=folds,
+> #             grid=tuning_grid,
+> #             metrics=metric_set(mn_log_loss))
+> # 
+> # # Find optimal tuning params
+> # best_params <- cv_results %>%
+> #   select_best("mn_log_loss")
+> # 
+> # print(best_params)
 > 
-> ## Split data for CV
-> folds <- vfold_cv(train, v = 4, repeats=1)
+> # Fit workflow
+> final_wf <- boost_wf %>%
++   #finalize_workflow(best_params) %>%
++   fit(data = train)
 > 
-> # Run the CV
-> cv_results <- boost_wf %>%
-+   tune_grid(resamples=folds,
-+             grid=tuning_grid,
-+             metrics=metric_set(mn_log_loss))
-Error in unserialize(socklist[[n]]) : error reading from connection
-Calls: %>% ... recvOneData -> recvOneData.SOCKcluster -> unserialize
-Execution halted
+> 
+> predict_function_gbm <-  function(model, newdata) {
++   predict(model, newdata) %>% pluck(.,1)
++ }
+> 
+> X <- as.data.frame(train %>% select(-target))
+> mod <- extract_fit_parsnip(final_wf)
+> shap <- fastshap::explain(final_wf, X = X, 
++                           pred_wrapper = predict_function_gbm, 
++                           nsim=10)
+There were 50 or more warnings (use warnings() to see the first 50)
+> 
+> saveRDS(shap,'shap.rds')
+> print('SAVED RDS')
+[1] "SAVED RDS"
+> 
+> ## Predict new y
+> output <- predict(final_wf, new_data=test, type='prob') %>%
++   bind_cols(test$id,.) %>%
++   rename(
++     id=...1,
++     Class_1=.pred_Class_1,
++     Class_2=.pred_Class_2,
++     Class_3=.pred_Class_3,
++     Class_4=.pred_Class_4,
++     Class_5=.pred_Class_5,
++     Class_6=.pred_Class_6,
++     Class_7=.pred_Class_7,
++     Class_8=.pred_Class_8,
++     Class_9=.pred_Class_9)
+New names:
+• `` -> `...1`
+There were 17 warnings (use warnings() to see them)
+> 
+> vroom::vroom_write(output,'./outputs/light_gbm_preds.csv',delim=',')
+> 
+> if(PARALLEL){
++   stopCluster(cl)
++ }
+> 
+> proc.time()
+      user     system    elapsed 
+211975.040   1810.375 107817.258 
