@@ -11,14 +11,14 @@ setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- F
-FACTOR_CUTOFF <- 25
+FACTOR_CUTOFF <- 26
 
 #########################
 ####### Load Data #######
 #########################
 
 ## Load data
-data <- load_data(factor_cutoff=0)#FACTOR_CUTOFF)
+data <- load_data(factor_cutoff=FACTOR_CUTOFF)
 train <- data$train
 test <- data$test
 
@@ -36,7 +36,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=F, poly=F, smote_K=0, pca_threshold=0.85) #TODO: ENCODE! 
+prepped_recipe <- setup_train_recipe(train, encode=T, poly=F, smote_K=5, pca_threshold=0.85)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -48,7 +48,7 @@ bake(prepped_recipe, new_data=test)
 
 ## Define model
 bayes_model <- naive_Bayes(
-  Laplace=tune(),
+  Laplace=0,
   smoothness=tune()) %>%
   set_engine("naivebayes") %>%
   set_mode("classification")
@@ -60,12 +60,11 @@ bayes_wf <- workflow() %>%
 
 ## Grid of values to tune over
 tuning_grid <- grid_regular(
-  Laplace(),
   smoothness(),
-  levels = 5)
+  levels = 4)
 
 ## Split data for CV
-folds <- vfold_cv(train, v = 5, repeats=1)
+folds <- vfold_cv(train, v = 4, repeats=1)
 
 ## Run the CV
 cv_results <- bayes_wf %>%

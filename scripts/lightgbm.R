@@ -12,7 +12,7 @@ setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- F
-FACTOR_CUTOFF <- 25
+FACTOR_CUTOFF <- 28
 
 #########################
 ####### Load Data #######
@@ -99,12 +99,6 @@ predict_function_gbm <-  function(model, newdata) {
 
 X <- as.data.frame(train %>% select(-target))
 mod <- extract_fit_parsnip(final_wf)
-shap <- fastshap::explain(final_wf, X = X, 
-                          pred_wrapper = predict_function_gbm, 
-                          nsim=10)
-
-saveRDS(shap,'shap.rds')
-print('SAVED RDS')
 
 ## Predict new y
 output <- predict(final_wf, new_data=test, type='prob') %>%

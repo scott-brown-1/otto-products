@@ -22,6 +22,8 @@ View(train)
 ## Check categorical vs discrete vs continuous factors
 plot_intro(train)
 
+corrplot::corrplot(cor(test %>% select(-id)))
+
 ###########################
 ### Check Missing Values ##
 ###########################

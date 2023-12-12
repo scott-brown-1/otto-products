@@ -33,7 +33,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=F, smote_K=5, pca_threshold=0.8)
+prepped_recipe <- setup_train_recipe(train, encode=T, poly=F, smote_K=0, pca_threshold=0)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -45,9 +45,9 @@ bake(prepped_recipe, new_data=test)
 
 ## Define model
 rf_model <- rand_forest(
-  mtry = tune(), #tune(),
-  min_n = tune(), #tune(),
-  trees = 400
+  mtry = tune(),
+  min_n = 5,
+  trees = 500
 ) %>%
   set_engine("ranger") %>%
   set_mode("classification")
@@ -59,7 +59,6 @@ rf_wf <- workflow(prepped_recipe) %>%
 ## Grid of values to tune over
 tuning_grid <- grid_regular(
   mtry(range=c(10,25)),#(range=c(4,ncol(train))),
-  min_n(),
   levels = 4)
 
 ## Split data for CV
@@ -82,8 +81,8 @@ final_wf <- rf_wf %>%
   finalize_workflow(best_params) %>%
   fit(data = train)
 
-final_wf <- rf_wf %>%
-  fit(data = train)
+# final_wf <- rf_wf %>%
+#   fit(data = train)
 
 ## Predict new y
 output <- predict(final_wf, new_data=test, type='prob') %>%
