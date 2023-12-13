@@ -2,7 +2,7 @@ library(tidyverse)
 
 source('./scripts/constants.R')
 
-load_data <- function(factor_cutoff=25, drop_n_worst=10){
+load_data <- function(factor_cutoff=25, drop_n_worst=0){
   .train <- vroom::vroom(TRAIN_PATH)
   .test <- vroom::vroom(TEST_PATH)
   

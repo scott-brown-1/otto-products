@@ -8,16 +8,18 @@ library(doParallel)
 
 setwd('..')
 source('./scripts/utils.R')
-source('./scripts/wrangling.R')
-PARALLEL <- T
+source('./scripts/feature_engineering.R')
+PARALLEL <- F
+FACTOR_CUTOFF <- 26
 
 #########################
 ####### Load Data #######
 #########################
 
 ## Load data
-train <- load_train()
-test <- load_test()
+data <- load_data(factor_cutoff=FACTOR_CUTOFF)
+train <- data$train
+test <- data$test
 
 #########################
 ## Feature Engineering ##
@@ -46,7 +48,7 @@ bake(prepped_recipe, new_data=test)
 ## Define model
 rf_model <- rand_forest(
   mtry = tune(),
-  min_n = 5,
+  min_n = 15,
   trees = 500
 ) %>%
   set_engine("ranger") %>%

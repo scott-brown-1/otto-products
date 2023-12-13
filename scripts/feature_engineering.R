@@ -5,6 +5,8 @@ setup_train_recipe <- function(df,encode=T,poly=F,smote_K=5, pca_threshold=0.85)
   
   prelim_ft_eng <- recipe(target~., data=df) %>%
     step_rm(id) %>%
+	step_other(all_nominal_predictors(), threshold = 0.01) %>%
+    step_novel(all_nominal_predictors()) %>%
     step_zv(all_predictors()) # Remove zero-variance cols 
 
   if(poly){
