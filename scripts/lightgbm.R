@@ -12,7 +12,7 @@ setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- F
-FACTOR_CUTOFF <- 28
+FACTOR_CUTOFF <- 26
 
 #########################
 ####### Load Data #######
@@ -37,7 +37,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=F, poly=F, smote_K=5, pca_threshold=0)
+prepped_recipe <- setup_train_recipe(train, encode=F, poly=F, smote_K=0, pca_threshold=0)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -91,14 +91,6 @@ boost_wf <- workflow(prepped_recipe) %>%
 final_wf <- boost_wf %>%
   #finalize_workflow(best_params) %>%
   fit(data = train)
-
-
-predict_function_gbm <-  function(model, newdata) {
-  predict(model, newdata) %>% pluck(.,1)
-}
-
-X <- as.data.frame(train %>% select(-target))
-mod <- extract_fit_parsnip(final_wf)
 
 ## Predict new y
 output <- predict(final_wf, new_data=test, type='prob') %>%

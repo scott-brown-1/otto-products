@@ -7,18 +7,18 @@ library(tidymodels)
 library(doParallel)
 library(discrim)
 
-setwd('..')
+#setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
-PARALLEL <- F
-FACTOR_CUTOFF <- 26
+PARALLEL <- T
+FACTOR_CUTOFF <- 200
 
 #########################
 ####### Load Data #######
 #########################
 
 ## Load data
-data <- load_data(factor_cutoff=FACTOR_CUTOFF)
+data <- load_data(factor_cutoff=FACTOR_CUTOFF, drop_n_worst = 0)
 train <- data$train
 test <- data$test
 
@@ -31,12 +31,12 @@ set.seed(2003)
 ## parallel tune grid
 
 if(PARALLEL){
-  cl <- makePSOCKcluster(8)
+  cl <- makePSOCKcluster(3)
   registerDoParallel(cl)
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=T, poly=F, smote_K=5, pca_threshold=0.85)
+prepped_recipe <- setup_train_recipe(train, encode=T, poly=F, smote_K=0, pca_threshold=0)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -49,7 +49,7 @@ bake(prepped_recipe, new_data=test)
 ## Define model
 bayes_model <- naive_Bayes(
   Laplace=0,
-  smoothness=tune()) %>%
+  smoothness=0.833) %>% #tune()) %>%
   set_engine("naivebayes") %>%
   set_mode("classification")
 
@@ -58,29 +58,29 @@ bayes_wf <- workflow() %>%
   add_recipe(prepped_recipe) %>%
   add_model(bayes_model)
 
-## Grid of values to tune over
-tuning_grid <- grid_regular(
-  smoothness(),
-  levels = 4)
-
-## Split data for CV
-folds <- vfold_cv(train, v = 4, repeats=1)
-
-## Run the CV
-cv_results <- bayes_wf %>%
-  tune_grid(resamples=folds,
-            grid=tuning_grid,
-            metrics=metric_set(mn_log_loss))
-
-## Find optimal tuning params
-best_params <- cv_results %>%
-  select_best("mn_log_loss")
-
-print(best_params)
+# ## Grid of values to tune over
+# tuning_grid <- grid_regular(
+#   smoothness(),
+#   levels = 4)
+# 
+# ## Split data for CV
+# folds <- vfold_cv(train, v = 4, repeats=1)
+# 
+# ## Run the CV
+# cv_results <- bayes_wf %>%
+#   tune_grid(resamples=folds,
+#             grid=tuning_grid,
+#             metrics=metric_set(mn_log_loss))
+# 
+# ## Find optimal tuning params
+# best_params <- cv_results %>%
+#   select_best("mn_log_loss")
+# 
+# print(best_params)
 
 ## Fit workflow
 final_wf <- bayes_wf %>%
-  finalize_workflow(best_params) %>%
+ # finalize_workflow(best_params) %>%
   fit(data = train)
 
 ## Predict new y

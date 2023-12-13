@@ -10,7 +10,7 @@ setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- F
-FACTOR_CUTOFF <- 26
+FACTOR_CUTOFF <- 0#26
 
 #########################
 ####### Load Data #######
@@ -35,7 +35,7 @@ if(PARALLEL){
 }
 
 ## Set up preprocessing
-prepped_recipe <- setup_train_recipe(train, encode=T, poly=F, smote_K=0, pca_threshold=0)
+prepped_recipe <- setup_train_recipe(train, encode=F, poly=F, smote_K=0, pca_threshold=0)
 
 ## Bake recipe
 bake(prepped_recipe, new_data=train)
@@ -47,7 +47,7 @@ bake(prepped_recipe, new_data=test)
 
 ## Define model
 rf_model <- rand_forest(
-  mtry = tune(),
+  mtry = 15,#tune(),
   min_n = 15,
   trees = 500
 ) %>%
@@ -80,7 +80,7 @@ print(best_params)
 
 ## Fit workflow
 final_wf <- rf_wf %>%
-  finalize_workflow(best_params) %>%
+  #finalize_workflow(best_params) %>%
   fit(data = train)
 
 # final_wf <- rf_wf %>%
