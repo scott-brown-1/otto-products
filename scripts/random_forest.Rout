@@ -208,3 +208,4 @@ Column(s) have zero variance so scaling cannot be used: `feat_5_new`, `feat_6_ne
 There were issues with some computations   A: x1
 There were issues with some computations   A: x2
 There were issues with some computations   A: x3
+There were issues with some computations   A: x4

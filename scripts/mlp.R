@@ -6,7 +6,7 @@ library(tidyverse)
 library(tidymodels)
 library(doParallel)
 
-#setwd('..')
+setwd('..')
 source('./scripts/utils.R')
 source('./scripts/feature_engineering.R')
 PARALLEL <- F
